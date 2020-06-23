@@ -35,13 +35,6 @@ import java.util.Iterator;
 import java.util.Properties;
 import java.util.logging.Logger;
 
-import org.hibernate.Query;
-import org.hibernate.cfg.Configuration;
-
-import br.gov.jfrj.siga.cp.bl.CpAmbienteEnumBL;
-import br.gov.jfrj.siga.hibernate.ExDao;
-import br.gov.jfrj.siga.model.dao.HibernateUtil;
-
 import com.google.enterprise.adaptor.AbstractAdaptor;
 import com.google.enterprise.adaptor.Adaptor;
 import com.google.enterprise.adaptor.AdaptorContext;
@@ -49,6 +42,9 @@ import com.google.enterprise.adaptor.DocId;
 import com.google.enterprise.adaptor.DocIdPusher;
 import com.google.enterprise.adaptor.PollingIncrementalLister;
 import com.google.enterprise.adaptor.Response;
+
+import br.gov.jfrj.siga.hibernate.ExDao;
+import br.gov.jfrj.siga.model.ContextoPersistencia;
 
 /**
  * Adaptador Google Search Appliance para movimentações do SIGA-DOC.
@@ -69,22 +65,7 @@ public abstract class ExAdaptor extends AbstractAdaptor implements Adaptor, Poll
 
 	@Override
 	public void init(AdaptorContext context) throws Exception {
-		Configuration cfg;
-		String servidor = context.getConfig().getValue("servidor");
 		permalink = context.getConfig().getValue("url.permalink");
-		if (servidor.equals("prod")) {
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.PRODUCAO);
-		} else if (servidor.equals("homolo")) {
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.HOMOLOGACAO);
-		} else if (servidor.equals("treina")) {
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.TREINAMENTO);
-		} else {
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.DESENVOLVIMENTO);
-		}
-
-		// Desabilitado para evitar o erro de compilação depois que foi feita a
-		// troca do Hibernate para o JPA
-		// HibernateUtil.configurarHibernate(cfg);
 		context.setPollingIncrementalLister(this);
 	}
 
@@ -99,15 +80,16 @@ public abstract class ExAdaptor extends AbstractAdaptor implements Adaptor, Poll
 	protected void pushDocIds(DocIdPusher pusher, Date date) throws InterruptedException {
 		try {
 			BufferingPusher outstream = new BufferingPusher(pusher);
-			ExDao dao = ExDao.getInstance();
-			Query q = dao.getSessao().createQuery(getIdsHql());
-			q.setDate("dt", date);
-			@SuppressWarnings("rawtypes")
-			Iterator i = q.iterate();
+			javax.persistence.Query q = ContextoPersistencia.em().createQuery(getIdsHql());
+			q.setParameter("dt", date);
+
+			Iterator<?> i = q.getResultList().iterator();
+			
 			while (i.hasNext()) {
 				DocId id = new DocId("" + i.next());
 				outstream.add(id);
 			}
+			
 			outstream.forcePush();
 		} finally {
 			ExDao.freeInstance();
