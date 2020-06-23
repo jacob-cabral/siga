@@ -41,21 +41,17 @@ import java.util.logging.Logger;
 
 import javax.naming.NamingException;
 
-import org.hibernate.cfg.Configuration;
 import org.kxml2.io.KXmlParser;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
 import br.gov.jfrj.siga.base.AplicacaoException;
-import br.gov.jfrj.siga.base.Texto;
-import br.gov.jfrj.siga.cp.bl.CpAmbienteEnumBL;
 import br.gov.jfrj.siga.ex.ExClassificacao;
 import br.gov.jfrj.siga.ex.ExFormaDocumento;
 import br.gov.jfrj.siga.ex.ExModelo;
 import br.gov.jfrj.siga.ex.ExNivelAcesso;
 import br.gov.jfrj.siga.ex.bl.Ex;
 import br.gov.jfrj.siga.hibernate.ExDao;
-import br.gov.jfrj.siga.model.dao.HibernateUtil;
 import br.gov.jfrj.siga.sinc.lib.Item;
 import br.gov.jfrj.siga.sinc.lib.OperadorComHistorico;
 import br.gov.jfrj.siga.sinc.lib.Sincronizador;
@@ -173,22 +169,6 @@ public class SigaExSinc {
 	public void run() throws Exception, NamingException, AplicacaoException {
 
 		desativarCacheDeSegundoNivel();
-
-		Configuration cfg;
-		if (servidor.equals("prod"))
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.PRODUCAO);
-		else if (servidor.equals("homolo"))
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.HOMOLOGACAO);
-		else if (servidor.equals("treina"))
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.TREINAMENTO);
-		else if (servidor.equals("desenv"))
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.DESENVOLVIMENTO);
-		else
-			cfg = ExDao.criarHibernateCfg(CpAmbienteEnumBL.DESENVOLVIMENTO);
-
-		// Desabilitado para evitar o erro de compilação depois que foi feita a
-		// troca do Hibernate para o JPA
-		// HibernateUtil.configurarHibernate(cfg);
 
 		dt = new Date();
 		log("--- Processando  " + dt + "--- ");
@@ -404,7 +384,7 @@ public class SigaExSinc {
 			OperadorComHistorico o = new OperadorComHistorico() {
 				public Sincronizavel gravar(Sincronizavel s) {
 					Sincronizavel o = ExDao.getInstance().gravar(s);
-					ExDao.getInstance().getSessao().flush();
+					ExDao.getInstance().descarregar();
 					return o;
 				}
 			};
@@ -443,7 +423,6 @@ public class SigaExSinc {
 			throw new Exception("Erro na gravação", e);
 		}
 
-		HibernateUtil.getSessao().flush();
 		log("Total de alterações: " + list.size());
 	}
 
