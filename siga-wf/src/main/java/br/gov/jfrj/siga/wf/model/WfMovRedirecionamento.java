@@ -12,6 +12,10 @@ import br.gov.jfrj.siga.dp.DpPessoa;
 @Entity
 @DiscriminatorValue("R")
 public class WfMovRedirecionamento extends WfMovTransicao {
+	
+	public WfMovRedirecionamento() {
+		super();
+	}
 
 	public WfMovRedirecionamento(WfProcedimento pi, Date dtIni, DpPessoa titular, DpLotacao lotaTitular,
 			CpIdentidade identidade, Integer de, Integer para) {
