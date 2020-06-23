@@ -3,20 +3,25 @@ package br.gov.jfrj.siga.gc.util;
 import java.io.IOException;
 
 import javax.persistence.EntityManager;
+import javax.servlet.Filter;
 import javax.servlet.FilterChain;
+import javax.servlet.FilterConfig;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 
-import br.gov.jfrj.siga.base.auditoria.filter.ThreadFilter;
 import br.gov.jfrj.siga.model.ContextoPersistencia;
 
-public class GcThreadFilter extends ThreadFilter {
+public class GcThreadFilter implements Filter {
 
-	public void doFiltro(final ServletRequest request,
-			final ServletResponse response, final FilterChain chain)
+	@Override
+	public void init(FilterConfig filterConfig) throws ServletException {
+		// TODO Auto-generated method stub
+	}
+
+	@Override
+	public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
 			throws IOException, ServletException {
-
 		EntityManager em = GcStarter.emf.createEntityManager();
 		ContextoPersistencia.setEntityManager(em);
 
@@ -37,7 +42,7 @@ public class GcThreadFilter extends ThreadFilter {
 	}
 
 	@Override
-	protected String getLoggerName() {
-		return "br.gov.jfrj.siga.gc";
+	public void destroy() {
+		// TODO Auto-generated method stub
 	}
 }
